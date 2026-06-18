@@ -9,13 +9,19 @@ import {
     getMyCourses
 } from "../controllers/courseController.js";
 
+import { protect } from "../middleware/authMiddleware.js";
+
 const router = express.Router();
+
 
 router.get("/", getAllCourses);
 router.get("/:id", getCourseById);
-router.post("/", createCourse);
-router.put("/:id", updateCourse);
-router.delete("/:id", deleteCourse);
-router.get("/user/:userId", getMyCourses);
+
+
+router.post("/", protect, createCourse);
+router.put("/:id", protect, updateCourse);
+router.delete("/:id", protect, deleteCourse);
+
+router.get("/my/all", protect, getMyCourses);
 
 export default router;

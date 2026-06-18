@@ -24,33 +24,50 @@ export async function getCourseById(req, res) {
 
 export async function createCourse (req, res) {
    try {
-        const {title,content,image,tradeFor,user} = req.body;
-        const newCourse = new Course({title, content, image, tradeFor, user});
+        const { title, content, image, tradeFor } = req.body;
+        
+        // Pošto je req.user objekat koji sadrži .id, čitamo tačno to polje:
+        const user = req.user.id; 
+
+        const newCourse = new Course({ title, content, image, tradeFor, user });
 
         await newCourse.save();
-        res.status(201).json({message: "Course created successfully", course: newCourse});
+        res.status(201).json({ message: "Course created successfully", course: newCourse });
    } catch (error) {
         console.error("Error in createCourse controller", error);
-        res.status(500).json({message: "Internal server error"});
+        res.status(500).json({ message: "Internal server error" });
    }
 }
 
-export async function updateCourse (req, res)  {
+export async function updateCourse (req, res) {
     try {
-        const {title,content,image,tradeFor} = req.body;
-        const updatedCourse = await Course.findByIdAndUpdate(req.params.id, 
-            {
-                title,
-                content,
-                image,
-                tradeFor
-            }); 
+        const { title, content, image, tradeFor } = req.body;
+        const userId = req.user.id; // Čitamo ID iz tokena
 
-        if(!updateCourse) return res.status(404).json({message:"Course not found"});
-        res.status(200).json({message:"Course updated successfully"});
+        // 1. Prvo nađemo kurs u bazi
+        const course = await Course.findById(req.params.id);
+
+        if (!course) {
+            return res.status(404).json({ message: "Course not found" });
+        }
+
+        // 2. Provera: Da li je korisnik iz tokena isti onaj koji je napravio kurs?
+        if (course.user.toString() !== userId) {
+            return res.status(403).json({ message: "Not authorized to update this course" });
+        }
+
+        // 3. Ako jeste, prepisujemo nove vrednosti ili ostavljamo stare ako nisu poslate
+        course.title = title || course.title;
+        course.content = content || course.content;
+        course.image = image || course.image;
+        course.tradeFor = tradeFor || course.tradeFor;
+
+        const updatedCourse = await course.save();
+        res.status(200).json({ message: "Course updated successfully", course: updatedCourse });
+
     } catch (error) {
         console.error("Error in updateCourse controller", error);
-        res.status(500).json({message: "Internal server error"});
+        res.status(500).json({ message: "Internal server error" });
     }
 }
 
@@ -58,7 +75,10 @@ export async function updateCourse (req, res)  {
 export async function deleteCourse(req, res) {
   try {
     const { id } = req.params;
-    const { userId, role } = req.body; // Šaljemo ID i ulogu onoga ko pokušava da obriše kroz body (dok ne stavimo auth)
+    
+    // Podatke o korisniku uzimamo iz tokena
+    const userId = req.user.id;
+    const role = req.user.role; // Tvoj middleware verovatno pakuje i rolu iz tokena/baze
 
     const course = await Course.findById(id);
 
@@ -66,7 +86,7 @@ export async function deleteCourse(req, res) {
       return res.status(404).json({ message: "Course not found" });
     }
 
-    // Provera: Da li je korisnik autor kursa ILI je admin
+    // Provera: Korisnik mora biti ili autor kursa ILI administrator
     if (course.user.toString() !== userId && role !== "admin") {
       return res.status(403).json({ message: "Not authorized to delete this course" });
     }
@@ -82,7 +102,8 @@ export async function deleteCourse(req, res) {
 // Preuzimanje kursa za odredjenog korisnika (Za profilnu stranicu)
 export async function getMyCourses(req, res) {
   try {
-    const { userId } = req.params;
+    // Umesto iz URL parametara, ID čitamo direktno iz tokena, isto kao za createCourse
+    const userId = req.user.id; 
     
     const courses = await Course.find({ user: userId });
     
