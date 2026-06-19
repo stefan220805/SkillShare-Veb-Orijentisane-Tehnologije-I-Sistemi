@@ -92,11 +92,29 @@ export async function loginUser(req, res) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
+//3. PREUZIMANJE PROFILA TRENUTNOG KORISNIKA (Preko tokena!)
+export async function getMyProfile(req, res) {
+  try {
+    // req.user.id nam stiže iz authMiddleware-a
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user);
+  } catch (error) {
+    console.error("Error in getMyProfile controller:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
 
-// 3. PREUZIMANJE SVIH KORISNIKA (Za administratore ili testiranje)
+// 4. PREUZIMANJE SVIH KORISNIKA (Za administratore ili testiranje)
 export async function getAllUsers(req, res) {
   try {
-    // Polje "-password" osigurava da se hešovane lozinke ne šalju u odgovoru
+    // Bezbednosna provera: Samo admin može da vidi sve korisnike
+    if (req.user.role !== "admin") {
+      return res.status(403).json({ message: "Not authorized. Admin only." });
+    }
+
     const users = await User.find().select("-password");
     res.status(200).json(users);
   } catch (error) {

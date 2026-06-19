@@ -1,9 +1,10 @@
 import SwapRequest from "../models/SwapRequest.js";
 
-
+// 1. KREIRANJE ZAHTEVA ZA RAZMENU
 export async function createSwapRequest(req, res) {
   try {
-    const { sender, receiver, offeredCourse, requestedCourse } = req.body;
+    const { receiver, offeredCourse, requestedCourse } = req.body;
+    const sender = req.user.id; // Uzimamo direktno iz tokena!
 
     if (sender === receiver) {
       return res.status(400).json({ message: "Cannot send a request to yourself." });
@@ -16,19 +17,19 @@ export async function createSwapRequest(req, res) {
       requestedCourse,
     });
 
-    res.status(201).json({message: "Request was sent successfully"});
+    res.status(201).json({ message: "Request was sent successfully", swapRequest: newRequest });
   } catch (error) {
     console.error("Error in createSwapRequest controller:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }
 
-// 2. Preuzimanje svih zahteva koje je primio određeni korisnik (da ih odobri ili odbije)
+// 2. PREUZIMANJE PRIMLJENIH ZAHTEVA (Samo za ulogovanog korisnika)
 export async function getMyReceivedRequests(req, res) {
   try {
-    const { userId } = req.params;
+    // Više ne čitamo iz req.params.userId, nego bezbedno iz tokena!
+    const userId = req.user.id; 
 
-    // .populate služi da iz baze povučemo i detalje o korisnicima i kursevima, a ne samo njihove ID-jeve
     const requests = await SwapRequest.find({ receiver: userId })
       .populate("sender", "name email")
       .populate("offeredCourse", "title")
@@ -41,28 +42,36 @@ export async function getMyReceivedRequests(req, res) {
   }
 }
 
-// 3. Ažuriranje statusa zahteva (Prihvatanje ili Odbijanje)
+// 3. AŽURIRANJE STATUSA (Prihvatanje ili Odbijanje)
 export async function updateSwapStatus(req, res) {
   try {
     const { requestId } = req.params;
-    const { status } = req.body; // očekujemo "accepted" ili "rejected"
+    const { status } = req.body; 
+    const userId = req.user.id; // ID korisnika koji pokušava da prihvati/odbije
 
     if (!["accepted", "rejected"].includes(status)) {
       return res.status(400).json({ message: "Status not valid." });
     }
 
-    const updatedRequest = await SwapRequest.findByIdAndUpdate(
-      requestId,
-      { status },
-      { new: true, runValidators: true }
-    );
+    // Prvo nađemo zahtev u bazi da proverimo ko je primalac
+    const swapRequest = await SwapRequest.findById(requestId);
 
-    if (!updatedRequest) {
+    if (!swapRequest) {
       return res.status(404).json({ message: "Request not found." });
     }
 
+    // Bezbednosna provera: Samo korisnik koji je PRIMIO zahtev može da ga odobri/odbije
+    if (swapRequest.receiver.toString() !== userId) {
+      return res.status(403).json({ message: "Not authorized to respond to this request." });
+    }
+
+    // Ako je sve u redu, menjamo status
+    swapRequest.status = status;
+    const updatedRequest = await swapRequest.save();
+
+    // Ispravljen string sa backtick-ovima za ispravan ispis statusa
     res.status(200).json({
-      message: "Request successfully updated on status: ${status}",
+      message: `Request successfully updated on status: ${status}`,
       swapRequest: updatedRequest,
     });
   } catch (error) {

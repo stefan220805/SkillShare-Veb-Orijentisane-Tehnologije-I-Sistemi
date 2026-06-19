@@ -1,15 +1,14 @@
 import express from "express";
-import { registerUser, loginUser, getAllUsers } from "../controllers/userController.js";
+import { registerUser, loginUser, getAllUsers, getMyProfile } from "../controllers/userController.js";
+import { protect } from "../middleware/authMiddleware.js"; 
 
 const router = express.Router();
 
-// Ruta za registraciju: POST http://localhost:5001/api/users/register
 router.post("/register", registerUser);
-
-// Ruta za login: POST http://localhost:5001/api/users/login
 router.post("/login", loginUser);
 
-// Ruta za preuzimanje svih korisnika: GET http://localhost:5001/api/users
-router.get("/", getAllUsers);
+// Zaključane rute koje zahtevaju token:
+router.get("/me", protect, getMyProfile);
+router.get("/", protect, getAllUsers);
 
 export default router;
