@@ -1,11 +1,20 @@
 import Course from "../models/Course.js";
 
 export async function getAllCourses (req, res) {
-    try{
-        const courses = await Course.find().sort({createdAt:-1}); //sortira od najnovijeg
-        res.status(200).json(courses);
+    try {
+        // Proveravamo da li je sa frontenda poslat neki pojam za pretragu (?keyword=nesto)
+        const keyword = req.query.keyword ? {
+            title: {
+                $regex: req.query.keyword,
+                $options: "i", // ignorise velika i mala slova
+            },
+        } : {};
 
-    }catch(error){
+        // U find() ubacujemo keyword, a .sort() ostaje tacno kako je zadato
+        const courses = await Course.find({...keyword}).sort({createdAt:-1}); 
+        
+        res.status(200).json(courses);
+    } catch(error) {
         console.error("Error in getAllCourses controller", error);
         res.status(500).json({message: "Internal server error"});
     }
@@ -26,7 +35,6 @@ export async function createCourse (req, res) {
    try {
         const { title, content, image, tradeFor } = req.body;
         
-        // Pošto je req.user objekat koji sadrži .id, čitamo tačno to polje:
         const user = req.user.id; 
 
         const newCourse = new Course({ title, content, image, tradeFor, user });
@@ -44,7 +52,7 @@ export async function updateCourse (req, res) {
         const { title, content, image, tradeFor } = req.body;
         const userId = req.user.id; // Čitamo ID iz tokena
 
-        // 1. Prvo nađemo kurs u bazi
+        // 1. Prvo nadjemo kurs u bazi
         const course = await Course.findById(req.params.id);
 
         if (!course) {
@@ -78,7 +86,7 @@ export async function deleteCourse(req, res) {
     
     // Podatke o korisniku uzimamo iz tokena
     const userId = req.user.id;
-    const role = req.user.role; // Tvoj middleware verovatno pakuje i rolu iz tokena/baze
+    const role = req.user.role; 
 
     const course = await Course.findById(id);
 

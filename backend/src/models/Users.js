@@ -22,7 +22,7 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: ["user", "admin"], // Dozvoljene su samo ove dve uloge
-      default: "user",          // Svaki novi korisnik je automatski običan korisnik
+      default: "user",          // Svaki novi korisnik je automatski obican korisnik
     }
   },
   {

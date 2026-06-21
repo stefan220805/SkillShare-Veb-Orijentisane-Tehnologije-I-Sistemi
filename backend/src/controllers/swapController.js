@@ -27,7 +27,6 @@ export async function createSwapRequest(req, res) {
 // 2. PREUZIMANJE PRIMLJENIH ZAHTEVA (Samo za ulogovanog korisnika)
 export async function getMyReceivedRequests(req, res) {
   try {
-    // Više ne čitamo iz req.params.userId, nego bezbedno iz tokena!
     const userId = req.user.id; 
 
     const requests = await SwapRequest.find({ receiver: userId })
@@ -42,7 +41,7 @@ export async function getMyReceivedRequests(req, res) {
   }
 }
 
-// 3. AŽURIRANJE STATUSA (Prihvatanje ili Odbijanje)
+// 3. AZURIRANJE STATUSA (Prihvatanje ili Odbijanje)
 export async function updateSwapStatus(req, res) {
   try {
     const { requestId } = req.params;
@@ -53,7 +52,7 @@ export async function updateSwapStatus(req, res) {
       return res.status(400).json({ message: "Status not valid." });
     }
 
-    // Prvo nađemo zahtev u bazi da proverimo ko je primalac
+    // Prvo nadjemo zahtev u bazi da proverimo ko je primalac
     const swapRequest = await SwapRequest.findById(requestId);
 
     if (!swapRequest) {
