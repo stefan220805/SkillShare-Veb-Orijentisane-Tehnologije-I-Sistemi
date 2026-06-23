@@ -85,9 +85,10 @@ const HomePage = () => {
             <p className="text-gray-400 italic">Trenutno nema kurseva za prikaz...</p>
           ) : (
             trendingCourses.map((course, index) => (
-              <div 
+              <Link 
+                to={`/course/${course._id}`}
                 key={course._id} 
-                className="min-w-[280px] h-[340px] bg-gray-100 rounded-2xl relative group snap-start shrink-0 overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300"
+                className="min-w-[280px] h-[340px] bg-gray-100 rounded-2xl relative group snap-start shrink-0 overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300 block"
               >
                 <img 
                   src={course.image && course.image.startsWith('http') ? course.image : `https://images.unsplash.com/photo-1517694712202-14dd9538aa97?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80&sig=${index}`} 
@@ -102,7 +103,7 @@ const HomePage = () => {
                   </div>
                   <div className="text-[#7e52a0] font-bold text-xl">→</div>
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>

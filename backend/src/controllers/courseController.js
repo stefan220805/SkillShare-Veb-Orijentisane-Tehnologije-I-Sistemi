@@ -33,11 +33,12 @@ export async function getCourseById(req, res) {
 
 export async function createCourse (req, res) {
    try {
-        const { title, content, image, tradeFor } = req.body;
-        
+        // Zamenili smo 'content' sa 'lessons'
+        const { title, lessons, image, tradeFor } = req.body; 
         const user = req.user.id; 
 
-        const newCourse = new Course({ title, content, image, tradeFor, user });
+        // I ovde prosleđujemo 'lessons' u bazu
+        const newCourse = new Course({ title, lessons, image, tradeFor, user });
 
         await newCourse.save();
         res.status(201).json({ message: "Course created successfully", course: newCourse });

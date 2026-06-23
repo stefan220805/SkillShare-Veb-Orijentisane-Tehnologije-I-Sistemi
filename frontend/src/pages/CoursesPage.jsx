@@ -8,7 +8,6 @@ const CoursesPage = () => {
   const [error, setError] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
 
-  // Funkcija za pretragu
   const fetchCourses = async (keyword = "") => {
     setLoading(true);
     try {
@@ -27,7 +26,6 @@ const CoursesPage = () => {
     }
   };
 
-  // Učitava sve kurseve na početku
   useEffect(() => {
     fetchCourses();
   }, []);
@@ -41,7 +39,6 @@ const CoursesPage = () => {
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         
-        {/* Naslov i Pretraga */}
         <div className="flex flex-col md:flex-row justify-between items-center mb-10">
           <h2 className="text-3xl font-extrabold text-[#012a36] mb-4 md:mb-0">
             Svi Kursevi
@@ -72,9 +69,10 @@ const CoursesPage = () => {
             <p className="col-span-full text-gray-500">Nema rezultata za tvoju pretragu.</p>
           ) : (
             courses.map((course, index) => (
-              <div 
+              <Link 
+                to={`/course/${course._id}`}
                 key={course._id} 
-                className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition duration-200 flex flex-col cursor-pointer group"
+                className="bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition duration-200 flex flex-col cursor-pointer group block"
               >
                 <div className="h-32 w-full overflow-hidden bg-gray-100">
                   <img 
@@ -97,7 +95,7 @@ const CoursesPage = () => {
                     </span>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))
           )}
         </div>
