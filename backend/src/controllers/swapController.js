@@ -1,4 +1,5 @@
 import SwapRequest from "../models/SwapRequest.js";
+import Course from "../models/Course.js";
 
 // 1. KREIRANJE ZAHTEVA ZA RAZMENU
 export async function createSwapRequest(req, res) {
@@ -75,6 +76,62 @@ export async function updateSwapStatus(req, res) {
     });
   } catch (error) {
     console.error("Error in updateSwapStatus:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+// 4. PREUZIMANJE POSLATIH ZAHTEVA (Koji je ulogovani korisnik poslao drugima)
+export async function getMySentRequests(req, res) {
+  try {
+    const userId = req.user.id; 
+
+    // Tražimo gde je ulogovani korisnik SENDER
+    const requests = await SwapRequest.find({ sender: userId })
+      .populate("receiver", "name email")
+      .populate("offeredCourse", "title")
+      .populate("requestedCourse", "title");
+
+    res.status(200).json(requests);
+  } catch (error) {
+    console.error("Error in getMySentRequests:", error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+// 5. PROVERA PRISTUPA KURSU (Da li je otključan)
+export async function checkCourseAccess(req, res) {
+  try {
+    const userId = String(req.user._id || req.user.id);
+    const courseId = req.params.courseId;
+
+    // Admin ima pristup svim kursevima
+    if (req.user && req.user.role === "admin") {
+      return res.status(200).json({ hasAccess: true });
+    }
+
+    const course = await Course.findById(courseId);
+    if (!course) {
+      return res.status(404).json({ message: "Course not found" });
+    }
+
+    const courseOwnerId = course.user?._id || course.user;
+    if (String(courseOwnerId) === userId) {
+      return res.status(200).json({ hasAccess: true });
+    }
+
+    const swap = await SwapRequest.findOne({
+      status: "accepted",
+      $or: [
+        { sender: userId, requestedCourse: courseId },
+        { receiver: userId, offeredCourse: courseId }
+      ]
+    });
+
+    if (swap) {
+      return res.status(200).json({ hasAccess: true });
+    }
+
+    return res.status(200).json({ hasAccess: false });
+  } catch (error) {
+    console.error("Error checking course access:", error);
     res.status(500).json({ message: "Internal server error" });
   }
 }

@@ -7,6 +7,9 @@ import RegisterPage from "./pages/RegisterPage";
 import CreateCoursePage from "./pages/CreateCoursePage";
 import CourseDetailsPage from "./pages/CourseDetailsPage";
 import ProfilePage from "./pages/ProfilePage";
+import EditCoursePage from "./pages/EditCoursePage";
+import AdminPage from "./pages/AdminPage";
+
 
 function App() {
   return (
@@ -20,6 +23,8 @@ function App() {
         <Route path="/create-course" element={<CreateCoursePage />} />
         <Route path="/course/:id" element={<CourseDetailsPage />} />
         <Route path="/profile" element={<ProfilePage />} />
+        <Route path="/edit-course/:id" element={<EditCoursePage />} />
+        <Route path="/admin" element={<AdminPage />} />
       </Routes>
     </Router>
   );

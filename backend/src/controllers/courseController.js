@@ -50,26 +50,28 @@ export async function createCourse (req, res) {
 
 export async function updateCourse (req, res) {
     try {
-        const { title, content, image, tradeFor } = req.body;
-        const userId = req.user.id; // Čitamo ID iz tokena
+        // Uklonjen 'content', ostali su samo naslov, slika, tradeFor i lekcije
+        const { title, image, tradeFor, lessons } = req.body;
+        const userId = req.user.id; 
 
-        // 1. Prvo nadjemo kurs u bazi
         const course = await Course.findById(req.params.id);
 
         if (!course) {
             return res.status(404).json({ message: "Course not found" });
         }
 
-        // 2. Provera: Da li je korisnik iz tokena isti onaj koji je napravio kurs?
         if (course.user.toString() !== userId) {
             return res.status(403).json({ message: "Not authorized to update this course" });
         }
 
-        // 3. Ako jeste, prepisujemo nove vrednosti ili ostavljamo stare ako nisu poslate
         course.title = title || course.title;
-        course.content = content || course.content;
-        course.image = image || course.image;
+        course.image = image !== undefined ? image : course.image;
         course.tradeFor = tradeFor || course.tradeFor;
+        
+        // Ažuriramo lekcije
+        if (lessons) {
+            course.lessons = lessons;
+        }
 
         const updatedCourse = await course.save();
         res.status(200).json({ message: "Course updated successfully", course: updatedCourse });

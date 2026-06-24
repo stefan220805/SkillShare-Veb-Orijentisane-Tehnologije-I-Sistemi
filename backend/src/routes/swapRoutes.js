@@ -1,5 +1,5 @@
 import express from "express";
-import { createSwapRequest, getMyReceivedRequests, updateSwapStatus } from "../controllers/swapController.js";
+import { createSwapRequest, getMyReceivedRequests, updateSwapStatus, getMySentRequests, checkCourseAccess } from "../controllers/swapController.js";
 import { protect } from "../middleware/authMiddleware.js"; // Uvozimo zaštitu
 
 const router = express.Router();
@@ -11,5 +11,7 @@ router.post("/", protect, createSwapRequest);
 router.get("/received", protect, getMyReceivedRequests);
 
 router.put("/status/:requestId", protect, updateSwapStatus);
+router.get("/sent", protect, getMySentRequests);
+router.get("/check-access/:courseId", protect, checkCourseAccess);
 
 export default router;

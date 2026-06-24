@@ -108,20 +108,17 @@ export async function getMyProfile(req, res) {
 }
 
 // 4. PREUZIMANJE SVIH KORISNIKA (Za administratore ili testiranje)
-export async function getAllUsers(req, res) {
+export const getAllUsers = async (req, res) => {
   try {
-    // Bezbednosna provera: Samo admin moze da vidi sve korisnike
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Not authorized. Admin only." });
-    }
-
-    const users = await User.find().select("-password");
+    // .select("-password") osigurava da nikada ne šaljemo lozinke na frontend
+    const users = await User.find({}).select("-password");
     res.status(200).json(users);
   } catch (error) {
-    console.error("Error in getAllUsers controller:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Greška pri povlačenju korisnika:", error);
+    res.status(500).json({ message: "Interna greška servera" });
   }
-}
+};
+
 // 5. IZMENA SOPSTVENOG PROFILA (Update)
 export async function updateUserProfile(req, res) {
   try {
@@ -158,29 +155,23 @@ export async function updateUserProfile(req, res) {
   }
 }
 
-// 6. BRISANJE KORISNIKA (I NJEGOVIH KURSEVA)
-export async function deleteUser(req, res) {
+export const deleteUser = async (req, res) => {
   try {
-    // Bezbednosna provera: Samo admin moze da brise korisnike
-    if (req.user.role !== "admin") {
-      return res.status(403).json({ message: "Not authorized. Admin only." });
-    }
-
     const user = await User.findById(req.params.id);
-    
-    if (user) {
-      // NOVO: Prvo brisemo sve kurseve ciji je autor ovaj korisnik
-      await Course.deleteMany({ user: req.params.id });
 
-      // Zatim brisemo samog korisnika
-      await User.findByIdAndDelete(req.params.id);
-      
-      res.status(200).json({ message: "Korisnik i svi njegovi kursevi su uspešno obrisani" });
-    } else {
-      res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "Korisnik nije pronađen" });
     }
+
+    // Opciono: Spreči admina da obriše samog sebe
+    if (user._id.toString() === req.user.id) {
+      return res.status(400).json({ message: "Ne možete obrisati sopstveni nalog" });
+    }
+
+    await User.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: "Korisnik je uspešno obrisan" });
   } catch (error) {
-    console.error("Error in deleteUser:", error);
-    res.status(500).json({ message: "Internal server error" });
+    console.error("Greška pri brisanju korisnika:", error);
+    res.status(500).json({ message: "Interna greška servera" });
   }
-}
+};
