@@ -11,6 +11,18 @@ export async function createSwapRequest(req, res) {
       return res.status(400).json({ message: "Cannot send a request to yourself." });
     }
 
+    // NOVO: Zabrana dupliranja - Provera da li već postoji zahtev za ovaj kurs
+    const existingRequest = await SwapRequest.findOne({
+      sender,
+      requestedCourse
+    });
+
+    if (existingRequest) {
+      return res.status(400).json({ 
+        message: "Već ste poslali zahtev za ovaj kurs. Proverite svoj profil." 
+      });
+    }
+
     const newRequest = await SwapRequest.create({
       sender,
       receiver,

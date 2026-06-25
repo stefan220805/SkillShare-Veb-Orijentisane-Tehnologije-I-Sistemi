@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import WeatherWidget from "../components/WeatherWidget";
 
 const ProfilePage = () => {
   const navigate = useNavigate();
@@ -93,10 +94,8 @@ const ProfilePage = () => {
     try {
       const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
       
-      // OVO JE BILO POGREŠNO: Bilo je /api/trades, sada je tačno /api/swaps/status/
       await axios.put(`http://localhost:5001/api/swaps/status/${requestId}`, { status: newStatus }, config);
       
-      // Ažuriramo stanje na frontendu
       setTradeRequests(tradeRequests.map(req => 
         req._id === requestId ? { ...req, status: newStatus } : req
       ));
@@ -149,6 +148,7 @@ const ProfilePage = () => {
                 </div>
                 <button type="submit" className="w-full bg-[#012a36] text-white py-2.5 rounded-lg font-bold hover:bg-[#29274c] transition mt-4">Sačuvaj izmene</button>
               </form>
+              <WeatherWidget />
             </div>
           </div>
 
@@ -222,6 +222,18 @@ const ProfilePage = () => {
                         }`}>
                           Status: {req.status === 'pending' ? 'Na čekanju' : req.status === 'accepted' ? 'Prihvaćeno' : 'Odbijeno'}
                         </span>
+
+                        {/* NOVO: DUGMIĆI ZA PRIHVAĆENU RAZMENU (Pristigli) */}
+                        {req.status === 'accepted' && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <Link 
+                              to={`/course/${req.offeredCourse?._id || req.offeredCourse}`} 
+                              className="bg-green-50 text-green-600 border border-green-200 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-green-100 transition flex items-center gap-1"
+                            >
+                              📖 Otvori kurs
+                            </Link>
+                          </div>
+                        )}
                       </div>
                       
                       {req.status === 'pending' && (
@@ -275,6 +287,18 @@ const ProfilePage = () => {
                         }`}>
                           Status: {req.status === 'pending' ? 'Na čekanju' : req.status === 'accepted' ? 'Prihvaćeno' : 'Odbijeno'}
                         </span>
+
+                        {/* NOVO: DUGMIĆI ZA PRIHVAĆENU RAZMENU (Poslati) */}
+                        {req.status === 'accepted' && (
+                          <div className="flex flex-wrap gap-2 mt-3">
+                            <Link 
+                              to={`/course/${req.requestedCourse?._id || req.requestedCourse}`} 
+                              className="bg-green-50 text-green-600 border border-green-200 px-4 py-1.5 rounded-lg text-xs font-bold hover:bg-green-100 transition flex items-center gap-1"
+                            >
+                              📖 Otvori kurs
+                            </Link>
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}

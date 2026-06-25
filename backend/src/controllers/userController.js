@@ -85,6 +85,7 @@ export async function loginUser(req, res) {
         name: user.name,
         email: user.email,
         role: user.role,
+        profilePicture: user.profilePicture || "", // NOVO: Dodata profilna slika
         token: generateToken(user._id),
       },
     });
@@ -128,7 +129,10 @@ export async function updateUserProfile(req, res) {
       user.name = req.body.name || user.name;
       user.email = req.body.email || user.email;
       
-      // Ako korisnik salje novu sifru, moramo je hesovati pre suvanja
+      // NOVO: Dodato hvatanje i čuvanje profilne slike
+      user.profilePicture = req.body.profilePicture || user.profilePicture;
+      
+      // Ako korisnik salje novu sifru, moramo je hesovati pre cuvanja
       if (req.body.password) {
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(req.body.password, salt);
@@ -142,6 +146,7 @@ export async function updateUserProfile(req, res) {
           _id: updatedUser._id,
           name: updatedUser.name,
           email: updatedUser.email,
+          profilePicture: updatedUser.profilePicture, // NOVO: Vraćamo sliku frontendu
           role: updatedUser.role,
           token: generateToken(updatedUser._id), // Generisemo novi token nakon izmene
         }
@@ -155,6 +160,7 @@ export async function updateUserProfile(req, res) {
   }
 }
 
+// ADMIN: Brisanje korisnika i svih njegovih kurseva
 export const deleteUser = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
@@ -163,13 +169,18 @@ export const deleteUser = async (req, res) => {
       return res.status(404).json({ message: "Korisnik nije pronađen" });
     }
 
-    // Opciono: Spreči admina da obriše samog sebe
+    // Sprečavamo admina da obriše samog sebe
     if (user._id.toString() === req.user.id) {
       return res.status(400).json({ message: "Ne možete obrisati sopstveni nalog" });
     }
 
+    // NOVO: Prvo brišemo sve kurseve čiji je autor ovaj korisnik
+    await Course.deleteMany({ user: user._id });
+
+    // Zatim brišemo samog korisnika
     await User.findByIdAndDelete(req.params.id);
-    res.status(200).json({ message: "Korisnik je uspešno obrisan" });
+    
+    res.status(200).json({ message: "Korisnik i njegovi kursevi su uspešno obrisani" });
   } catch (error) {
     console.error("Greška pri brisanju korisnika:", error);
     res.status(500).json({ message: "Interna greška servera" });

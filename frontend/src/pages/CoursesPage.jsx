@@ -85,12 +85,24 @@ const CoursesPage = () => {
                   <h3 className="font-bold text-[#012a36] text-sm mb-1 line-clamp-2 leading-tight">
                     {course.title}
                   </h3>
-                  <p className="text-xs text-gray-500 mb-2 line-clamp-1">{course.user?.name || "SkillShare Kreator"}</p>
-                  <div className="flex items-center text-yellow-500 text-xs mb-2">
-                    ★★★★☆ <span className="text-gray-400 ml-1">(4.5)</span>
+                  
+                  {/* DINAMIČKO IME KREATORA */}
+                  <p className="text-xs text-gray-500 mb-2 line-clamp-1">{course.user?.name || "Nepoznat kreator"}</p>
+                  
+                  {/* DINAMIČKI PRIKAZ OCENA */}
+                  <div className="flex items-center gap-1 mb-2">
+                    <div className="text-yellow-500 text-xs">
+                      {"★".repeat(Math.round(course.averageRating || 0))}
+                      {"☆".repeat(5 - Math.round(course.averageRating || 0))}
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-600">
+                      {course.averageRating > 0 ? `${course.averageRating} / 5` : "Nema ocena"} 
+                      <span className="text-gray-400 font-normal ml-1">({course.numReviews || 0})</span>
+                    </span>
                   </div>
+
                   <div className="mt-auto pt-2 border-t border-gray-100">
-                    <span className="text-[10px] font-semibold text-[#e6bccd] bg-[#29274c] px-2 py-1 rounded">
+                    <span className="text-[10px] font-semibold text-[#e6bccd] bg-[#29274c] px-2 py-1 rounded line-clamp-1">
                       Zamena za: {course.tradeFor}
                     </span>
                   </div>

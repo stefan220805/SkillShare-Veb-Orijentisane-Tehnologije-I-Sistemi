@@ -20,10 +20,11 @@ const CourseDetailsPage = () => {
   const [showTradeForm, setShowTradeForm] = useState(false);
   const [tradeStatus, setTradeStatus] = useState({ type: "", text: "" });
   
-  // NOVO: Stanje pristupa (zaključano po defaultu)
   const [hasAccess, setHasAccess] = useState(false);
 
   const userInfo = JSON.parse(localStorage.getItem("userInfo"));
+
+  const hasAlreadyReviewed = userInfo ? reviews.some((r) => r.user?._id === userInfo._id) : false;
 
   const getYouTubeEmbedUrl = (url) => {
     if (!url) return "";
@@ -50,7 +51,6 @@ const CourseDetailsPage = () => {
         if (userInfo) {
           const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
           
-          // Učitavamo kurseve korisnika za padajući meni
           const myCoursesRes = await axios.get("http://localhost:5001/api/courses");
           const filtered = myCoursesRes.data.filter(
             (c) => c.user?._id === userInfo._id || c.user === userInfo._id
@@ -58,7 +58,6 @@ const CourseDetailsPage = () => {
           setMyCourses(filtered);
           if (filtered.length > 0) setSelectedOfferedCourse(filtered[0]._id);
 
-          // NOVO: Proveravamo da li korisnik ima otključan pristup
           try {
             const accessRes = await axios.get(`http://localhost:5001/api/swaps/check-access/${id}`, config);
             setHasAccess(accessRes.data.hasAccess);
@@ -67,7 +66,7 @@ const CourseDetailsPage = () => {
             setHasAccess(false);
           }
         } else {
-          setHasAccess(false); // Gosti nemaju pristup
+          setHasAccess(false);
         }
 
         setLoading(false);
@@ -114,6 +113,19 @@ const CourseDetailsPage = () => {
     }
   };
 
+  const handleDeleteReview = async (reviewId) => {
+    if (window.confirm("Admin akcija: Da li ste sigurni da želite da obrišete ovu recenziju?")) {
+      try {
+        const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
+        await axios.delete(`http://localhost:5001/api/reviews/${reviewId}`, config);
+        
+        setReviews(reviews.filter((r) => r._id !== reviewId));
+      } catch (err) {
+        alert(err.response?.data?.message || "Greška pri brisanju recenzije.");
+      }
+    }
+  };
+
   if (loading) return <div className="text-center py-20 text-[#7e52a0] font-bold text-xl">Učitavanje...</div>;
   if (error) return <div className="text-center py-20 text-red-500 font-bold text-xl">{error}</div>;
   if (!course) return null;
@@ -143,7 +155,12 @@ const CourseDetailsPage = () => {
             {userInfo ? (
               course.user?._id !== userInfo._id && (
                 <div className="w-full md:w-80">
-                  {!showTradeForm ? (
+                  {/* NOVO: Provera da li već ima pristup pre nego što se prikaže forma */}
+                  {hasAccess ? (
+                    <div className="bg-green-50 text-green-700 border border-green-200 px-4 py-2 rounded-lg text-sm font-bold text-center shadow-sm">
+                      ✅ Razmena je odobrena
+                    </div>
+                  ) : !showTradeForm ? (
                     <button 
                       onClick={() => setShowTradeForm(true)}
                       className="w-full bg-[#7e52a0] text-white px-4 py-2 rounded-lg font-bold hover:bg-[#d295bf] transition shadow-md text-sm"
@@ -250,24 +267,31 @@ const CourseDetailsPage = () => {
           
           {userInfo ? (
             course.user?._id !== userInfo._id ? (
-              // NOVO: Proveravamo da li ima pristup kursu pre nego što prikažemo formu
               hasAccess ? (
-                <form onSubmit={submitReview} className="mb-10 bg-[#f8f9fa] p-6 rounded-xl border border-gray-200">
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Ocena</label>
-                    <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className="w-full md:w-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-[#7e52a0]">
-                      <option value="5">5 - Odlično</option>
-                      <option value="4">4 - Vrlo dobro</option>
-                      <option value="3">3 - Dobro</option>
-                      <option value="2">2 - Dovoljno</option>
-                      <option value="1">1 - Nedovoljno</option>
-                    </select>
+                hasAlreadyReviewed ? (
+                  <div className="mb-8 bg-blue-50 p-6 rounded-xl border border-blue-200 text-center">
+                    <p className="text-blue-600 font-bold text-lg mb-1">⭐ Hvala na recenziji!</p>
+                    <p className="text-sm text-blue-500">Već ste ostavili svoju ocenu i iskustvo za ovaj kurs.</p>
                   </div>
-                  <div className="mb-4">
-                    <textarea required rows="3" value={comment} onChange={(e) => setComment(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#7e52a0] resize-none" placeholder="Kakvo je tvoje iskustvo sa ovim kursom?"></textarea>
-                  </div>
-                  <button type="submit" className="bg-[#012a36] text-white px-5 py-2 rounded-md font-bold hover:bg-[#29274c]">Pošalji recenziju</button>
-                </form>
+                ) : (
+                  <form onSubmit={submitReview} className="mb-10 bg-[#f8f9fa] p-6 rounded-xl border border-gray-200">
+                    <div className="mb-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Ocena</label>
+                      <select value={rating} onChange={(e) => setRating(Number(e.target.value))} className="w-full md:w-32 px-3 py-2 border border-gray-300 rounded-md focus:ring-[#7e52a0]">
+                        <option value="5">5 - Odlično</option>
+                        <option value="4">4 - Vrlo dobro</option>
+                        <option value="3">3 - Dobro</option>
+                        <option value="2">2 - Dovoljno</option>
+                        <option value="1">1 - Nedovoljno</option>
+                      </select>
+                    </div>
+                    <div className="mb-4">
+                      <textarea required rows="3" value={comment} onChange={(e) => setComment(e.target.value)} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-[#7e52a0] resize-none" placeholder="Kakvo je tvoje iskustvo sa ovim kursom?"></textarea>
+                    </div>
+                    {reviewError && <p className="text-red-500 text-xs font-bold mb-3">{reviewError}</p>}
+                    <button type="submit" className="bg-[#012a36] text-white px-5 py-2 rounded-md font-bold hover:bg-[#29274c]">Pošalji recenziju</button>
+                  </form>
+                )
               ) : (
                 <div className="mb-8 bg-gray-50 p-4 rounded-xl border border-gray-200 text-center">
                   <p className="text-gray-500 font-medium text-sm">
@@ -287,12 +311,29 @@ const CourseDetailsPage = () => {
           <div className="space-y-6">
             {reviews.map((review) => (
               <div key={review._id} className="border-b border-gray-100 pb-6">
-                <div className="flex items-center mb-2">
-                  <div className="w-8 h-8 rounded-full bg-[#d295bf] text-white flex items-center justify-center font-bold mr-3">{review.user?.name ? review.user.name.charAt(0).toUpperCase() : "K"}</div>
-                  <div>
-                    <h4 className="font-bold text-[#012a36]">{review.user?.name || "Korisnik"}</h4>
-                    <div className="text-yellow-500 text-sm">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</div>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center">
+                    <div className="w-8 h-8 rounded-full bg-[#d295bf] text-white flex items-center justify-center font-bold mr-3 overflow-hidden border border-[#e6bccd]">
+                      {review.user?.profilePicture ? (
+                        <img src={review.user.profilePicture} alt="Profil" className="w-full h-full object-cover" />
+                      ) : (
+                        review.user?.name ? review.user.name.charAt(0).toUpperCase() : "K"
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="font-bold text-[#012a36]">{review.user?.name || "Korisnik"}</h4>
+                      <div className="text-yellow-500 text-sm">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</div>
+                    </div>
                   </div>
+                  
+                  {userInfo && userInfo.role === "admin" && (
+                    <button 
+                      onClick={() => handleDeleteReview(review._id)} 
+                      className="text-red-500 bg-red-50 hover:bg-red-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors border border-red-100"
+                    >
+                      Obriši recenziju
+                    </button>
+                  )}
                 </div>
                 <p className="text-gray-600 pl-11">{review.comment}</p>
               </div>

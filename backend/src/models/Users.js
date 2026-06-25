@@ -21,8 +21,13 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin"], // Dozvoljene su samo ove dve uloge
-      default: "user",          // Svaki novi korisnik je automatski obican korisnik
+      enum: ["user", "admin"], 
+      default: "user",          
+    },
+    // NOVO POLJE ZA SLIKU:
+    profilePicture: {
+      type: String,
+      default: "", // Default je prazan string (nema slike)
     }
   },
   {

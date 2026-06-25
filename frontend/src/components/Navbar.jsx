@@ -53,8 +53,12 @@ const Navbar = () => {
                   className="flex items-center gap-2 bg-[#012a36]/40 hover:bg-[#012a36] px-3 py-1.5 rounded-lg transition-colors border border-transparent hover:border-[#7e52a0]/50"
                 >
                   {/* Avatar krug sa prvim slovom imena */}
-                  <span className="w-7 h-7 bg-[#7e52a0] text-white rounded-full flex items-center justify-center text-sm font-bold shadow-sm">
-                    {userInfo.name.charAt(0).toUpperCase()}
+                  <span className="w-7 h-7 bg-[#7e52a0] text-white rounded-full flex items-center justify-center text-sm font-bold shadow-sm overflow-hidden">
+                  {userInfo.profilePicture ? (
+                      <img src={userInfo.profilePicture} alt="Profil" className="w-full h-full object-cover" />
+                    ) : (
+                      userInfo.name.charAt(0).toUpperCase()
+                    )}
                   </span>
                   <span className="font-medium text-white hidden sm:block">
                     {userInfo.name.split(" ")[0]}

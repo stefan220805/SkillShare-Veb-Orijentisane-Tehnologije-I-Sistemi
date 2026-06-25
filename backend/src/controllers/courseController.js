@@ -1,4 +1,5 @@
 import Course from "../models/Course.js";
+import Review from "../models/Review.js";
 
 export async function getAllCourses (req, res) {
     try {
@@ -10,10 +11,36 @@ export async function getAllCourses (req, res) {
             },
         } : {};
 
-        // U find() ubacujemo keyword, a .sort() ostaje tacno kako je zadato
-        const courses = await Course.find({...keyword}).sort({createdAt:-1}); 
+        // 1. U find() ubacujemo keyword, sortiramo i OBAVEZNO populiramo podatke o kreatoru
+        const courses = await Course.find({...keyword})
+            .populate("user", "name profilePicture")
+            .sort({createdAt:-1}); 
         
-        res.status(200).json(courses);
+        // 2. Povlačimo sve recenzije iz baze
+        const reviews = await Review.find({});
+
+        // 3. Za svaki kurs računamo njegov tačan prosek ocena
+        const coursesWithRatings = courses.map(course => {
+            const courseObj = course.toObject(); // Pretvaramo Mongoose dokument u običan objekat
+            
+            // Nalazimo samo recenzije koje pripadaju ovom kursu
+            const courseReviews = reviews.filter(r => r.course.toString() === courseObj._id.toString());
+            const numReviews = courseReviews.length;
+            
+            // Računamo prosek (ako nema recenzija, prosek je 0)
+            const averageRating = numReviews > 0
+                ? courseReviews.reduce((acc, item) => item.rating + acc, 0) / numReviews
+                : 0;
+
+            return {
+                ...courseObj,
+                averageRating: Number(averageRating.toFixed(1)), // Npr. 4.3
+                numReviews
+            };
+        });
+
+        // 4. Vraćamo obogaćene kurseve na frontend
+        res.status(200).json(coursesWithRatings);
     } catch(error) {
         console.error("Error in getAllCourses controller", error);
         res.status(500).json({message: "Internal server error"});

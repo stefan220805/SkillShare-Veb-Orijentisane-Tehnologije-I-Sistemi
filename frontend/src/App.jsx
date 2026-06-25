@@ -9,6 +9,7 @@ import CourseDetailsPage from "./pages/CourseDetailsPage";
 import ProfilePage from "./pages/ProfilePage";
 import EditCoursePage from "./pages/EditCoursePage";
 import AdminPage from "./pages/AdminPage";
+import AdminUserDetailsPage from "./pages/AdminUserDetailsPage";
 
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/edit-course/:id" element={<EditCoursePage />} />
         <Route path="/admin" element={<AdminPage />} />
+        <Route path="/admin/user/:id" element={<AdminUserDetailsPage />} />
       </Routes>
     </Router>
   );
