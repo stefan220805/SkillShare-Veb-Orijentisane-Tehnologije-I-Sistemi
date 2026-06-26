@@ -24,7 +24,6 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"], 
       default: "user",          
     },
-    // NOVO POLJE ZA SLIKU:
     profilePicture: {
       type: String,
       default: "", // Default je prazan string (nema slike)

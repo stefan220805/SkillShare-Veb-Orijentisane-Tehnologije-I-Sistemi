@@ -49,9 +49,12 @@ export async function getAllCourses (req, res) {
 
 export async function getCourseById(req, res) {
     try {
-        const course = await Course.findById(req.params.id);
+        // DODATO: .populate("user", "name profilePicture")
+        const course = await Course.findById(req.params.id).populate("user", "name profilePicture");
+        
         if(!course) return res.status(404).json({message:"Course not found"});
-            res.json(course);
+        
+        res.json(course);
     } catch (error) {
         console.error("Error in getCourseById controller", error);
         res.status(500).json({message: "Internal server error"});

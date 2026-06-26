@@ -1,6 +1,6 @@
 import express from "express";
 import { addReview, getCourseReviews, deleteReview} from "../controllers/reviewController.js";
-import { protect, admin} from "../middleware/authMiddleware.js"; // Tvoj middleware za proveru tokena
+import { protect, admin} from "../middleware/authMiddleware.js"; 
 
 const router = express.Router();
 

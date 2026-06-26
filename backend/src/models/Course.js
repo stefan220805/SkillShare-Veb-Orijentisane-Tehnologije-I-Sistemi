@@ -17,7 +17,6 @@ const courseSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    // Umesto starog polja 'content' koje je bilo običan String, sada imamo niz lekcija
     lessons: [lessonSchema], 
     image: {
       type: String,

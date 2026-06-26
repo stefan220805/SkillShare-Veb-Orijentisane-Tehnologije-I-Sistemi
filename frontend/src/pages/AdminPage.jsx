@@ -18,7 +18,6 @@ const AdminPage = () => {
     const fetchUsers = async () => {
       try {
         const config = { headers: { Authorization: `Bearer ${userInfo.token}` } };
-        // Povlačimo samo korisnike, kurseve ćemo povlačiti na posebnoj stranici
         const { data } = await axios.get("http://localhost:5001/api/users", config);
         setUsers(data);
         setLoading(false);
